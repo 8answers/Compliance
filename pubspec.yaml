@@ -95,6 +95,7 @@ flutter:
     - assets/images/meal_dinner.svg
     - assets/images/region_north.svg
     - assets/images/region_central.svg
+    - assets/images/Audit.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -63,6 +63,7 @@ create table if not exists public.inspections (
   menu_file_size_bytes bigint check (
     menu_file_size_bytes is null or menu_file_size_bytes >= 0
   ),
+  menu_text text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -77,6 +78,9 @@ add column if not exists menu_file_name text;
 alter table public.inspections
 add column if not exists menu_file_size_bytes bigint
 check (menu_file_size_bytes is null or menu_file_size_bytes >= 0);
+
+alter table public.inspections
+add column if not exists menu_text text;
 
 alter table public.inspections enable row level security;
 

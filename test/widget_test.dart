@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:compliance/main.dart';
 import 'package:compliance/models/inspection_draft.dart';
@@ -58,6 +59,50 @@ class _FakeMenuFilePicker implements MenuFilePicker {
       sizeBytes: 4 * 1024 * 1024,
     );
   }
+}
+
+Future<void> _openMenuUploadScreen(WidgetTester tester) async {
+  await tester.pump(const Duration(seconds: 5));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Next'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Continue with Google'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('New Nutritional Audit'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Education'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Next'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('13–18 Years'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Next'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Vegetarian'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Next'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Breakfast'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Next'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('North India'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Next'));
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -339,84 +384,95 @@ void main() {
     expect(find.text('Browse File'), findsOneWidget);
   });
 
-  testWidgets('Uploaded menu save stores inspection and returns Dashboard', (
+  testWidgets(
+    'Uploaded menu summary generates inspection and returns Dashboard',
+    (WidgetTester tester) async {
+      final inspectionRepository = _FakeInspectionRepository();
+      final menuFilePicker = _FakeMenuFilePicker();
+
+      await tester.pumpWidget(
+        _testApp(
+          inspectionRepository: inspectionRepository,
+          menuFilePicker: menuFilePicker,
+        ),
+      );
+      await _openMenuUploadScreen(tester);
+
+      await tester.tap(find.text('Browse File'));
+      await tester.pump(const Duration(milliseconds: 900));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Summary'), findsOneWidget);
+      expect(find.text('Generate Audit'), findsOneWidget);
+      expect(find.text('image1020443.png'), findsOneWidget);
+
+      await tester.tap(find.text('Generate Audit'));
+      await tester.pumpAndSettle();
+
+      expect(inspectionRepository.savedDrafts, hasLength(1));
+      expect(
+        inspectionRepository.savedDrafts.single.institutionType,
+        'Education',
+      );
+      expect(inspectionRepository.savedDrafts.single.ageGroups, [
+        '13–18 Years',
+      ]);
+      expect(inspectionRepository.savedDrafts.single.dietTypes, ['Vegetarian']);
+      expect(inspectionRepository.savedDrafts.single.mealsServed, [
+        'Breakfast',
+      ]);
+      expect(inspectionRepository.savedDrafts.single.region, 'North India');
+      expect(
+        inspectionRepository.savedDrafts.single.menuEntryMethod,
+        InspectionDraft.uploadFileMethod,
+      );
+      expect(
+        inspectionRepository.savedDrafts.single.menuFileName,
+        'image1020443.png',
+      );
+      expect(
+        inspectionRepository.savedDrafts.single.menuFileSizeBytes,
+        4 * 1024 * 1024,
+      );
+      expect(find.text('Recent'), findsOneWidget);
+    },
+  );
+
+  testWidgets('Typed menu summary generates inspection and returns Dashboard', (
     WidgetTester tester,
   ) async {
     final inspectionRepository = _FakeInspectionRepository();
-    final menuFilePicker = _FakeMenuFilePicker();
 
     await tester.pumpWidget(
-      _testApp(
-        inspectionRepository: inspectionRepository,
-        menuFilePicker: menuFilePicker,
-      ),
+      _testApp(inspectionRepository: inspectionRepository),
     );
-    await tester.pump(const Duration(seconds: 5));
+    await _openMenuUploadScreen(tester);
+
+    await tester.tap(find.text('Type Menu'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(EditableText), 'M');
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Continue with Google'));
-    await tester.pumpAndSettle();
+    expect(find.text('Summary'), findsOneWidget);
+    expect(find.text('Generate Audit'), findsOneWidget);
+    expect(find.text('M'), findsOneWidget);
 
-    await tester.tap(find.text('New Nutritional Audit'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Education'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('13–18 Years'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Vegetarian'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Breakfast'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('North India'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Browse File'));
-    await tester.pump(const Duration(milliseconds: 900));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Next'));
+    await tester.tap(find.text('Generate Audit'));
     await tester.pumpAndSettle();
 
     expect(inspectionRepository.savedDrafts, hasLength(1));
     expect(
-      inspectionRepository.savedDrafts.single.institutionType,
-      'Education',
+      inspectionRepository.savedDrafts.single.menuEntryMethod,
+      InspectionDraft.typedMenuMethod,
     );
-    expect(inspectionRepository.savedDrafts.single.ageGroups, ['13–18 Years']);
-    expect(inspectionRepository.savedDrafts.single.dietTypes, ['Vegetarian']);
-    expect(inspectionRepository.savedDrafts.single.mealsServed, ['Breakfast']);
-    expect(inspectionRepository.savedDrafts.single.region, 'North India');
-    expect(
-      inspectionRepository.savedDrafts.single.menuFileName,
-      'image1020443.png',
-    );
-    expect(
-      inspectionRepository.savedDrafts.single.menuFileSizeBytes,
-      4 * 1024 * 1024,
-    );
+    expect(inspectionRepository.savedDrafts.single.menuText, 'M');
     expect(find.text('Recent'), findsOneWidget);
   });
 }

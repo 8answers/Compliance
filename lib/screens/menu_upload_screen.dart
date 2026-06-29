@@ -9,6 +9,9 @@ import '../services/app_services.dart';
 import '../theme/app_theme.dart';
 import '../widgets/home_indicator.dart';
 import '../widgets/inspection_widgets.dart';
+import 'inspection_summary_screen.dart';
+
+enum _MenuInputMode { uploadFile, typeMenu }
 
 enum _MenuUploadState { empty, uploading, uploaded }
 
@@ -22,23 +25,37 @@ class MenuUploadScreen extends StatefulWidget {
 }
 
 class _MenuUploadScreenState extends State<MenuUploadScreen> {
+  final _typedMenuController = TextEditingController();
+  _MenuInputMode _inputMode = _MenuInputMode.uploadFile;
   _MenuUploadState _uploadState = _MenuUploadState.empty;
   MenuFileSelection? _selectedFile;
   Timer? _uploadTimer;
   double _uploadProgress = 0;
-  bool _isSaving = false;
-  String? _errorMessage;
 
   static const _horizontalPadding = 16.0;
 
   @override
+  void initState() {
+    super.initState();
+    _typedMenuController.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
+    _typedMenuController.dispose();
     _uploadTimer?.cancel();
     super.dispose();
   }
 
+  bool get _canContinue {
+    return switch (_inputMode) {
+      _MenuInputMode.uploadFile => _uploadState == _MenuUploadState.uploaded,
+      _MenuInputMode.typeMenu => _typedMenuController.text.trim().isNotEmpty,
+    };
+  }
+
   Future<void> _pickFile() async {
-    if (_uploadState == _MenuUploadState.uploading || _isSaving) {
+    if (_uploadState == _MenuUploadState.uploading) {
       return;
     }
 
@@ -49,10 +66,10 @@ class _MenuUploadScreenState extends State<MenuUploadScreen> {
 
     _uploadTimer?.cancel();
     setState(() {
+      _inputMode = _MenuInputMode.uploadFile;
       _selectedFile = file;
       _uploadState = _MenuUploadState.uploading;
       _uploadProgress = 0.1;
-      _errorMessage = null;
     });
 
     _uploadTimer = Timer.periodic(const Duration(milliseconds: 140), (timer) {
@@ -76,65 +93,45 @@ class _MenuUploadScreenState extends State<MenuUploadScreen> {
   }
 
   void _removeFile() {
-    if (_isSaving) {
-      return;
-    }
-
     _uploadTimer?.cancel();
     setState(() {
       _selectedFile = null;
       _uploadState = _MenuUploadState.empty;
       _uploadProgress = 0;
-      _errorMessage = null;
     });
   }
 
-  Future<void> _saveInspection() async {
-    final selectedFile = _selectedFile;
-    if (_uploadState != _MenuUploadState.uploaded ||
-        selectedFile == null ||
-        _isSaving) {
+  void _openSummary() {
+    if (!_canContinue) {
       return;
     }
 
-    setState(() {
-      _isSaving = true;
-      _errorMessage = null;
-    });
+    final draft = switch (_inputMode) {
+      _MenuInputMode.uploadFile => widget.draft.copyWith(
+        menuEntryMethod: InspectionDraft.uploadFileMethod,
+        menuFileName: _selectedFile!.name,
+        menuFileSizeBytes: _selectedFile!.sizeBytes,
+      ),
+      _MenuInputMode.typeMenu => widget.draft.copyWith(
+        menuEntryMethod: InspectionDraft.typedMenuMethod,
+        menuText: _typedMenuController.text.trim(),
+      ),
+    };
 
-    final draft = widget.draft.copyWith(
-      menuFileName: selectedFile.name,
-      menuFileSizeBytes: selectedFile.sizeBytes,
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => InspectionSummaryScreen(draft: draft),
+      ),
     );
-
-    try {
-      await AppServices.of(
-        context,
-      ).inspectionRepository.createInspection(draft);
-      if (!mounted) {
-        return;
-      }
-
-      Navigator.of(context).popUntil((route) => route.isFirst);
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _isSaving = false;
-        _errorMessage = 'Could not save inspection. Please try again.';
-      });
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     final scale = designScale(context);
     final horizontalPadding = _horizontalPadding * scale;
-    final nextEnabled = _uploadState == _MenuUploadState.uploaded && !_isSaving;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.black,
       body: SafeArea(
         bottom: false,
@@ -171,31 +168,32 @@ class _MenuUploadScreenState extends State<MenuUploadScreen> {
                       ),
                     ),
                     SizedBox(height: 39 * scale),
-                    _MenuModeTabs(scale: scale),
-                    SizedBox(height: 32 * scale),
-                    if (_uploadState == _MenuUploadState.empty)
-                      _EmptyUploadPanel(scale: scale, onBrowse: _pickFile)
-                    else
-                      _SelectedFileCard(
-                        scale: scale,
-                        file: _selectedFile!,
-                        isUploading: _uploadState == _MenuUploadState.uploading,
-                        progress: _uploadProgress,
-                        onRemove: _removeFile,
-                      ),
-                    if (_errorMessage != null) ...[
+                    _MenuModeTabs(
+                      scale: scale,
+                      inputMode: _inputMode,
+                      onModeChanged: (mode) {
+                        setState(() => _inputMode = mode);
+                      },
+                    ),
+                    SizedBox(height: 16 * scale),
+                    if (_inputMode == _MenuInputMode.uploadFile) ...[
                       SizedBox(height: 16 * scale),
-                      Text(
-                        _errorMessage!,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.nataSans(
-                          fontSize: 14 * scale,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.white,
-                          height: 1.35,
+                      if (_uploadState == _MenuUploadState.empty)
+                        _EmptyUploadPanel(scale: scale, onBrowse: _pickFile)
+                      else
+                        SelectedMenuFileCard(
+                          scale: scale,
+                          file: _selectedFile!,
+                          isUploading:
+                              _uploadState == _MenuUploadState.uploading,
+                          progress: _uploadProgress,
+                          onRemove: _removeFile,
                         ),
+                    ] else
+                      _TypedMenuInput(
+                        scale: scale,
+                        controller: _typedMenuController,
                       ),
-                    ],
                     SizedBox(height: 132 * scale),
                   ],
                 ),
@@ -215,9 +213,8 @@ class _MenuUploadScreenState extends State<MenuUploadScreen> {
                   Expanded(
                     child: InspectionNextButton(
                       scale: scale,
-                      enabled: nextEnabled,
-                      isBusy: _isSaving,
-                      onTap: nextEnabled ? _saveInspection : null,
+                      enabled: _canContinue,
+                      onTap: _canContinue ? _openSummary : null,
                     ),
                   ),
                 ],
@@ -235,9 +232,15 @@ class _MenuUploadScreenState extends State<MenuUploadScreen> {
 }
 
 class _MenuModeTabs extends StatelessWidget {
-  const _MenuModeTabs({required this.scale});
+  const _MenuModeTabs({
+    required this.scale,
+    required this.inputMode,
+    required this.onModeChanged,
+  });
 
   final double scale;
+  final _MenuInputMode inputMode;
+  final ValueChanged<_MenuInputMode> onModeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -247,34 +250,50 @@ class _MenuModeTabs extends StatelessWidget {
       height: 1.0,
     );
 
+    Widget tab({required _MenuInputMode mode, required String label}) {
+      final selected = inputMode == mode;
+      return Expanded(
+        child: InkWell(
+          onTap: () => onModeChanged(mode),
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 7 * scale),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: labelStyle.copyWith(
+                color: selected ? AppColors.green : AppColors.white,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Column(
       children: [
         Row(
           children: [
-            Expanded(
-              child: Text(
-                'Upload File',
-                textAlign: TextAlign.center,
-                style: labelStyle.copyWith(color: AppColors.green),
-              ),
-            ),
-            Expanded(
-              child: Text(
-                'Type Menu',
-                textAlign: TextAlign.center,
-                style: labelStyle.copyWith(color: AppColors.white),
-              ),
-            ),
+            tab(mode: _MenuInputMode.uploadFile, label: 'Upload File'),
+            tab(mode: _MenuInputMode.typeMenu, label: 'Type Menu'),
           ],
         ),
-        SizedBox(height: 7 * scale),
         Row(
           children: [
             Expanded(
-              child: Container(height: 1 * scale, color: AppColors.green),
+              child: Container(
+                height: 1 * scale,
+                color: inputMode == _MenuInputMode.uploadFile
+                    ? AppColors.green
+                    : AppColors.white,
+              ),
             ),
             Expanded(
-              child: Container(height: 1 * scale, color: AppColors.white),
+              child: Container(
+                height: 1 * scale,
+                color: inputMode == _MenuInputMode.typeMenu
+                    ? AppColors.green
+                    : AppColors.white,
+              ),
             ),
           ],
         ),
@@ -372,20 +391,70 @@ class _BrowseFileButton extends StatelessWidget {
   }
 }
 
-class _SelectedFileCard extends StatelessWidget {
-  const _SelectedFileCard({
+class _TypedMenuInput extends StatelessWidget {
+  const _TypedMenuInput({required this.scale, required this.controller});
+
+  final double scale;
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 378 * scale,
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.white, width: 1 * scale),
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16 * scale,
+        vertical: 8 * scale,
+      ),
+      child: TextField(
+        controller: controller,
+        onTapOutside: (_) => FocusScope.of(context).unfocus(),
+        expands: true,
+        maxLines: null,
+        minLines: null,
+        keyboardType: TextInputType.multiline,
+        textAlignVertical: TextAlignVertical.top,
+        cursorColor: AppColors.white,
+        style: GoogleFonts.nataSans(
+          fontSize: 16 * scale,
+          fontWeight: FontWeight.w400,
+          color: AppColors.white,
+          height: 1.35,
+        ),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          isCollapsed: true,
+          hintText:
+              'Paste or type the menu here...\n\nExample:\nMonday\nBreakfast: Upma, Banana, Milk\nLunch: Chapati, Aloo Sabzi, Rice, Palak Dal,\nButter Milk\n...',
+          hintStyle: GoogleFonts.nataSans(
+            fontSize: 16 * scale,
+            fontWeight: FontWeight.w400,
+            color: const Color(0xFF313131),
+            height: 1.35,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SelectedMenuFileCard extends StatelessWidget {
+  const SelectedMenuFileCard({
+    super.key,
     required this.scale,
     required this.file,
-    required this.isUploading,
-    required this.progress,
-    required this.onRemove,
+    this.isUploading = false,
+    this.progress = 1,
+    this.onRemove,
   });
 
   final double scale;
   final MenuFileSelection file;
   final bool isUploading;
   final double progress;
-  final VoidCallback onRemove;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -432,14 +501,15 @@ class _SelectedFileCard extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: onRemove,
-                icon: Icon(
-                  Icons.close,
-                  color: const Color(0xFFFF3B30),
-                  size: 32 * scale,
+              if (onRemove != null)
+                IconButton(
+                  onPressed: onRemove,
+                  icon: Icon(
+                    Icons.close,
+                    color: const Color(0xFFFF3B30),
+                    size: 32 * scale,
+                  ),
                 ),
-              ),
             ],
           ),
           if (isUploading) ...[
