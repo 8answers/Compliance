@@ -3,11 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../models/inspection_draft.dart';
 import '../models/menu_file_selection.dart';
-import '../services/app_services.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_svg.dart';
 import '../widgets/home_indicator.dart';
 import '../widgets/inspection_widgets.dart';
+import 'audit_progress_screen.dart';
 import 'menu_upload_screen.dart';
 
 class InspectionSummaryScreen extends StatefulWidget {
@@ -21,40 +21,14 @@ class InspectionSummaryScreen extends StatefulWidget {
 }
 
 class _InspectionSummaryScreenState extends State<InspectionSummaryScreen> {
-  bool _isSaving = false;
-  String? _errorMessage;
-
   static const _horizontalPadding = 16.0;
 
-  Future<void> _generateAudit() async {
-    if (_isSaving) {
-      return;
-    }
-
-    setState(() {
-      _isSaving = true;
-      _errorMessage = null;
-    });
-
-    try {
-      await AppServices.of(
-        context,
-      ).inspectionRepository.createInspection(widget.draft);
-      if (!mounted) {
-        return;
-      }
-
-      Navigator.of(context).popUntil((route) => route.isFirst);
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _isSaving = false;
-        _errorMessage = 'Could not generate audit. Please try again.';
-      });
-    }
+  void _openAuditProgress() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => AuditProgressScreen(draft: widget.draft),
+      ),
+    );
   }
 
   @override
@@ -88,8 +62,7 @@ class _InspectionSummaryScreenState extends State<InspectionSummaryScreen> {
                       Expanded(
                         child: _GenerateAuditButton(
                           scale: scale,
-                          isSaving: _isSaving,
-                          onTap: _generateAudit,
+                          onTap: _openAuditProgress,
                         ),
                       ),
                     ],
@@ -146,19 +119,6 @@ class _InspectionSummaryScreenState extends State<InspectionSummaryScreen> {
                           values: [widget.draft.region ?? ''],
                         ),
                         _MenuSummary(scale: scale, draft: widget.draft),
-                        if (_errorMessage != null) ...[
-                          SizedBox(height: 16 * scale),
-                          Text(
-                            _errorMessage!,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.nataSans(
-                              fontSize: 14 * scale,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.white,
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),
@@ -177,14 +137,9 @@ class _InspectionSummaryScreenState extends State<InspectionSummaryScreen> {
 }
 
 class _GenerateAuditButton extends StatelessWidget {
-  const _GenerateAuditButton({
-    required this.scale,
-    required this.isSaving,
-    required this.onTap,
-  });
+  const _GenerateAuditButton({required this.scale, required this.onTap});
 
   final double scale;
-  final bool isSaving;
   final VoidCallback onTap;
 
   @override
@@ -193,40 +148,29 @@ class _GenerateAuditButton extends StatelessWidget {
       color: AppColors.green,
       borderRadius: BorderRadius.circular(32 * scale),
       child: InkWell(
-        onTap: isSaving ? null : onTap,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(32 * scale),
         child: SizedBox(
           height: 64 * scale,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: isSaving
-                ? [
-                    SizedBox(
-                      width: 24 * scale,
-                      height: 24 * scale,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5 * scale,
-                        color: AppColors.white,
-                      ),
-                    ),
-                  ]
-                : [
-                    Text(
-                      'Generate Audit',
-                      style: GoogleFonts.nataSans(
-                        fontSize: 24 * scale,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.white,
-                        height: 1.0,
-                      ),
-                    ),
-                    SizedBox(width: 16 * scale),
-                    AppSvg(
-                      asset: 'assets/images/Audit.svg',
-                      width: 26 * scale,
-                      height: 26 * scale,
-                    ),
-                  ],
+            children: [
+              Text(
+                'Generate Audit',
+                style: GoogleFonts.nataSans(
+                  fontSize: 24 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.white,
+                  height: 1.0,
+                ),
+              ),
+              SizedBox(width: 16 * scale),
+              AppSvg(
+                asset: 'assets/images/Audit.svg',
+                width: 26 * scale,
+                height: 26 * scale,
+              ),
+            ],
           ),
         ),
       ),

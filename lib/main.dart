@@ -7,6 +7,7 @@ import 'services/app_services.dart';
 import 'services/auth_service.dart';
 import 'services/inspection_repository.dart';
 import 'services/menu_file_picker.dart';
+import 'services/nutritional_audit_service.dart';
 import 'services/supabase_config.dart';
 
 Future<void> main() async {
@@ -32,11 +33,13 @@ class ComplianceApp extends StatelessWidget {
     super.key,
     this.authService = const SupabaseAuthService(),
     this.inspectionRepository = const SupabaseInspectionRepository(),
+    this.nutritionalAuditService = const SupabaseNutritionalAuditService(),
     this.menuFilePicker = const NativeMenuFilePicker(),
   });
 
   final AuthService authService;
   final InspectionRepository inspectionRepository;
+  final NutritionalAuditService nutritionalAuditService;
   final MenuFilePicker menuFilePicker;
 
   @override
@@ -44,6 +47,7 @@ class ComplianceApp extends StatelessWidget {
     return AppServices(
       authService: authService,
       inspectionRepository: inspectionRepository,
+      nutritionalAuditService: nutritionalAuditService,
       menuFilePicker: menuFilePicker,
       child: MaterialApp(
         title: 'Compliance',

@@ -96,39 +96,24 @@ class _NewInspectionScreenState extends State<NewInspectionScreen> {
                 SizedBox(height: 96 * scale),
               ],
             ),
-            Positioned(
-              left: horizontalPadding,
-              right: horizontalPadding,
-              bottom: 34 * scale,
-              child: Row(
-                children: [
-                  InspectionBackButton(
-                    scale: scale,
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                  SizedBox(width: 16 * scale),
-                  Expanded(
-                    child: InspectionNextButton(
-                      scale: scale,
-                      enabled: _selectedIndex != null,
-                      onTap: _selectedIndex != null
-                          ? () {
-                              final draft = widget.draft.copyWith(
-                                institutionType:
-                                    _institutionTypes[_selectedIndex!].title,
-                              );
+            InspectionBottomActions(
+              scale: scale,
+              nextEnabled: _selectedIndex != null,
+              onBack: () => Navigator.of(context).pop(),
+              onNext: _selectedIndex != null
+                  ? () {
+                      final draft = widget.draft.copyWith(
+                        institutionType:
+                            _institutionTypes[_selectedIndex!].title,
+                      );
 
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => AgeGroupScreen(draft: draft),
-                                ),
-                              );
-                            }
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => AgeGroupScreen(draft: draft),
+                        ),
+                      );
+                    }
+                  : null,
             ),
             Align(
               alignment: Alignment.bottomCenter,
@@ -166,40 +151,43 @@ class _InstitutionGrid extends StatelessWidget {
   final double scale;
   final ValueChanged<int> onSelect;
 
-  static const _cardWidth = 171.0;
-  static const _rowGap = 17.0;
+  static const _cardHeight = 144.0;
+  static const _gap = 16.0;
 
   @override
   Widget build(BuildContext context) {
-    final cardWidth = _cardWidth * scale;
-
     return Column(
       children: [
         for (var row = 0; row < (types.length / 2).ceil(); row++) ...[
-          if (row > 0) SizedBox(height: _rowGap * scale),
+          if (row > 0) SizedBox(height: _gap * scale),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              for (var col = 0; col < 2; col++)
-                if (row * 2 + col < types.length)
-                  SizedBox(
-                    width: cardWidth,
-                    child: InspectionSelectionCard(
-                      title: types[row * 2 + col].title,
-                      subtitle: types[row * 2 + col].subtitle,
-                      iconAsset: types[row * 2 + col].iconAsset,
-                      isSelected: selectedIndex == row * 2 + col,
-                      scale: scale,
-                      onTap: () => onSelect(row * 2 + col),
-                    ),
-                  )
-                else
-                  SizedBox(width: cardWidth),
+              Expanded(child: _cardFor(row * 2)),
+              SizedBox(width: _gap * scale),
+              Expanded(child: _cardFor(row * 2 + 1)),
             ],
           ),
         ],
       ],
+    );
+  }
+
+  Widget _cardFor(int index) {
+    if (index >= types.length) {
+      return SizedBox(height: _cardHeight * scale);
+    }
+
+    return SizedBox(
+      height: _cardHeight * scale,
+      child: InspectionSelectionCard(
+        title: types[index].title,
+        subtitle: types[index].subtitle,
+        iconAsset: types[index].iconAsset,
+        isSelected: selectedIndex == index,
+        scale: scale,
+        onTap: () => onSelect(index),
+      ),
     );
   }
 }

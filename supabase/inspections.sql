@@ -64,6 +64,10 @@ create table if not exists public.inspections (
     menu_file_size_bytes is null or menu_file_size_bytes >= 0
   ),
   menu_text text,
+  audit_number integer check (audit_number is null or audit_number > 0),
+  nutritional_report jsonb,
+  report_created_at timestamptz,
+  report_deleted_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -81,6 +85,23 @@ check (menu_file_size_bytes is null or menu_file_size_bytes >= 0);
 
 alter table public.inspections
 add column if not exists menu_text text;
+
+alter table public.inspections
+add column if not exists audit_number integer
+check (audit_number is null or audit_number > 0);
+
+alter table public.inspections
+add column if not exists nutritional_report jsonb;
+
+alter table public.inspections
+add column if not exists report_created_at timestamptz;
+
+alter table public.inspections
+add column if not exists report_deleted_at timestamptz;
+
+create index if not exists inspections_created_by_audit_number_idx
+on public.inspections (created_by, audit_number desc)
+where audit_number is not null;
 
 alter table public.inspections enable row level security;
 

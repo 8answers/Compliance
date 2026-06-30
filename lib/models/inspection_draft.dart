@@ -8,6 +8,8 @@ class InspectionDraft {
     this.menuEntryMethod,
     this.menuFileName,
     this.menuFileSizeBytes,
+    this.menuFileMimeType,
+    this.menuFileBase64Data,
     this.menuText,
   });
 
@@ -22,6 +24,8 @@ class InspectionDraft {
   final String? menuEntryMethod;
   final String? menuFileName;
   final int? menuFileSizeBytes;
+  final String? menuFileMimeType;
+  final String? menuFileBase64Data;
   final String? menuText;
 
   InspectionDraft copyWith({
@@ -33,6 +37,8 @@ class InspectionDraft {
     String? menuEntryMethod,
     String? menuFileName,
     int? menuFileSizeBytes,
+    String? menuFileMimeType,
+    String? menuFileBase64Data,
     String? menuText,
   }) {
     return InspectionDraft(
@@ -44,6 +50,8 @@ class InspectionDraft {
       menuEntryMethod: menuEntryMethod ?? this.menuEntryMethod,
       menuFileName: menuFileName ?? this.menuFileName,
       menuFileSizeBytes: menuFileSizeBytes ?? this.menuFileSizeBytes,
+      menuFileMimeType: menuFileMimeType ?? this.menuFileMimeType,
+      menuFileBase64Data: menuFileBase64Data ?? this.menuFileBase64Data,
       menuText: menuText ?? this.menuText,
     );
   }

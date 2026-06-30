@@ -68,7 +68,7 @@ class _AgeGroupScreenState extends State<AgeGroupScreen> {
                     padding: EdgeInsets.only(top: horizontalPadding),
                     child: InspectionFlowHeader(currentStep: 2, scale: scale),
                   ),
-                  SizedBox(height: 8 * scale),
+                  SizedBox(height: 16 * scale),
                   Text(
                     'Select Age Group(s)',
                     style: GoogleFonts.nataSans(
@@ -112,38 +112,23 @@ class _AgeGroupScreenState extends State<AgeGroupScreen> {
                 ],
               ),
             ),
-            Positioned(
-              left: horizontalPadding,
-              right: horizontalPadding,
-              bottom: 34 * scale,
-              child: Row(
-                children: [
-                  InspectionBackButton(
-                    scale: scale,
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                  SizedBox(width: 16 * scale),
-                  Expanded(
-                    child: InspectionNextButton(
-                      scale: scale,
-                      enabled: _selectedIndexes.isNotEmpty,
-                      onTap: _selectedIndexes.isNotEmpty
-                          ? () {
-                              final draft = widget.draft.copyWith(
-                                ageGroups: _selectedAgeGroups(),
-                              );
+            InspectionBottomActions(
+              scale: scale,
+              nextEnabled: _selectedIndexes.isNotEmpty,
+              onBack: () => Navigator.of(context).pop(),
+              onNext: _selectedIndexes.isNotEmpty
+                  ? () {
+                      final draft = widget.draft.copyWith(
+                        ageGroups: _selectedAgeGroups(),
+                      );
 
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => DietTypeScreen(draft: draft),
-                                ),
-                              );
-                            }
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => DietTypeScreen(draft: draft),
+                        ),
+                      );
+                    }
+                  : null,
             ),
             Align(
               alignment: Alignment.bottomCenter,

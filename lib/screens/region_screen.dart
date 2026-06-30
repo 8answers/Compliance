@@ -62,8 +62,8 @@ class _RegionScreenState extends State<RegionScreen> {
     _RegionOption(
       title: 'North-East India',
       iconAsset: 'assets/images/region_north.svg',
-      iconWidth: 21.37,
-      iconHeight: 21.37,
+      iconWidth: 14.222,
+      iconHeight: 16,
       iconRotation: math.pi / 4,
     ),
   ];
@@ -103,7 +103,7 @@ class _RegionScreenState extends State<RegionScreen> {
                     padding: EdgeInsets.only(top: horizontalPadding),
                     child: InspectionFlowHeader(currentStep: 5, scale: scale),
                   ),
-                  SizedBox(height: 8 * scale),
+                  SizedBox(height: 16 * scale),
                   Text(
                     'Select Region',
                     style: GoogleFonts.nataSans(
@@ -143,26 +143,11 @@ class _RegionScreenState extends State<RegionScreen> {
                 ],
               ),
             ),
-            Positioned(
-              left: horizontalPadding,
-              right: horizontalPadding,
-              bottom: 34 * scale,
-              child: Row(
-                children: [
-                  InspectionBackButton(
-                    scale: scale,
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                  SizedBox(width: 16 * scale),
-                  Expanded(
-                    child: InspectionNextButton(
-                      scale: scale,
-                      enabled: _selectedIndex != null,
-                      onTap: _selectedIndex != null ? _openMenuUpload : null,
-                    ),
-                  ),
-                ],
-              ),
+            InspectionBottomActions(
+              scale: scale,
+              nextEnabled: _selectedIndex != null,
+              onBack: () => Navigator.of(context).pop(),
+              onNext: _selectedIndex != null ? _openMenuUpload : null,
             ),
             Align(
               alignment: Alignment.bottomCenter,

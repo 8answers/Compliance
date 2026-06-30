@@ -96,7 +96,7 @@ class _MealsServedScreenState extends State<MealsServedScreen> {
                     padding: EdgeInsets.only(top: horizontalPadding),
                     child: InspectionFlowHeader(currentStep: 4, scale: scale),
                   ),
-                  SizedBox(height: 8 * scale),
+                  SizedBox(height: 16 * scale),
                   Text(
                     'Select Meals Served',
                     style: GoogleFonts.nataSans(
@@ -142,38 +142,23 @@ class _MealsServedScreenState extends State<MealsServedScreen> {
                 ],
               ),
             ),
-            Positioned(
-              left: horizontalPadding,
-              right: horizontalPadding,
-              bottom: 34 * scale,
-              child: Row(
-                children: [
-                  InspectionBackButton(
-                    scale: scale,
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                  SizedBox(width: 16 * scale),
-                  Expanded(
-                    child: InspectionNextButton(
-                      scale: scale,
-                      enabled: _selectedIndexes.isNotEmpty,
-                      onTap: _selectedIndexes.isNotEmpty
-                          ? () {
-                              final draft = widget.draft.copyWith(
-                                mealsServed: _selectedMealsServed(),
-                              );
+            InspectionBottomActions(
+              scale: scale,
+              nextEnabled: _selectedIndexes.isNotEmpty,
+              onBack: () => Navigator.of(context).pop(),
+              onNext: _selectedIndexes.isNotEmpty
+                  ? () {
+                      final draft = widget.draft.copyWith(
+                        mealsServed: _selectedMealsServed(),
+                      );
 
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => RegionScreen(draft: draft),
-                                ),
-                              );
-                            }
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => RegionScreen(draft: draft),
+                        ),
+                      );
+                    }
+                  : null,
             ),
             Align(
               alignment: Alignment.bottomCenter,

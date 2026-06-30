@@ -111,6 +111,8 @@ class _MenuUploadScreenState extends State<MenuUploadScreen> {
         menuEntryMethod: InspectionDraft.uploadFileMethod,
         menuFileName: _selectedFile!.name,
         menuFileSizeBytes: _selectedFile!.sizeBytes,
+        menuFileMimeType: _selectedFile!.mimeType,
+        menuFileBase64Data: _selectedFile!.base64Data,
       ),
       _MenuInputMode.typeMenu => widget.draft.copyWith(
         menuEntryMethod: InspectionDraft.typedMenuMethod,
@@ -147,7 +149,7 @@ class _MenuUploadScreenState extends State<MenuUploadScreen> {
                       padding: EdgeInsets.only(top: horizontalPadding),
                       child: InspectionFlowHeader(currentStep: 6, scale: scale),
                     ),
-                    SizedBox(height: 8 * scale),
+                    SizedBox(height: 16 * scale),
                     Text(
                       'Upload or Enter Menu',
                       style: GoogleFonts.nataSans(
@@ -199,26 +201,11 @@ class _MenuUploadScreenState extends State<MenuUploadScreen> {
                 ),
               ),
             ),
-            Positioned(
-              left: horizontalPadding,
-              right: horizontalPadding,
-              bottom: 34 * scale,
-              child: Row(
-                children: [
-                  InspectionBackButton(
-                    scale: scale,
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                  SizedBox(width: 16 * scale),
-                  Expanded(
-                    child: InspectionNextButton(
-                      scale: scale,
-                      enabled: _canContinue,
-                      onTap: _canContinue ? _openSummary : null,
-                    ),
-                  ),
-                ],
-              ),
+            InspectionBottomActions(
+              scale: scale,
+              nextEnabled: _canContinue,
+              onBack: () => Navigator.of(context).pop(),
+              onNext: _canContinue ? _openSummary : null,
             ),
             Align(
               alignment: Alignment.bottomCenter,

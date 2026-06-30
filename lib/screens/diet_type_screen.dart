@@ -80,7 +80,7 @@ class _DietTypeScreenState extends State<DietTypeScreen> {
                     padding: EdgeInsets.only(top: horizontalPadding),
                     child: InspectionFlowHeader(currentStep: 3, scale: scale),
                   ),
-                  SizedBox(height: 8 * scale),
+                  SizedBox(height: 16 * scale),
                   Text(
                     'Select Diet Type',
                     style: GoogleFonts.nataSans(
@@ -125,39 +125,23 @@ class _DietTypeScreenState extends State<DietTypeScreen> {
                 ],
               ),
             ),
-            Positioned(
-              left: horizontalPadding,
-              right: horizontalPadding,
-              bottom: 34 * scale,
-              child: Row(
-                children: [
-                  InspectionBackButton(
-                    scale: scale,
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                  SizedBox(width: 16 * scale),
-                  Expanded(
-                    child: InspectionNextButton(
-                      scale: scale,
-                      enabled: _selectedIndexes.isNotEmpty,
-                      onTap: _selectedIndexes.isNotEmpty
-                          ? () {
-                              final draft = widget.draft.copyWith(
-                                dietTypes: _selectedDietTypes(),
-                              );
+            InspectionBottomActions(
+              scale: scale,
+              nextEnabled: _selectedIndexes.isNotEmpty,
+              onBack: () => Navigator.of(context).pop(),
+              onNext: _selectedIndexes.isNotEmpty
+                  ? () {
+                      final draft = widget.draft.copyWith(
+                        dietTypes: _selectedDietTypes(),
+                      );
 
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) =>
-                                      MealsServedScreen(draft: draft),
-                                ),
-                              );
-                            }
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => MealsServedScreen(draft: draft),
+                        ),
+                      );
+                    }
+                  : null,
             ),
             Align(
               alignment: Alignment.bottomCenter,

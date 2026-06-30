@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -195,16 +197,20 @@ class InspectionNextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: enabled ? 1 : 0.5,
-      child: Material(
-        color: AppColors.green,
-        borderRadius: BorderRadius.circular(32 * scale),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(32 * scale),
-          child: SizedBox(
-            height: 64 * scale,
+    final borderRadius = BorderRadius.circular(32 * scale);
+    final foregroundOpacity = enabled ? 1.0 : 0.5;
+
+    return Material(
+      color: enabled ? AppColors.green : const Color(0xFF005126),
+      borderRadius: borderRadius,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: borderRadius,
+        child: SizedBox(
+          height: 64 * scale,
+          child: Opacity(
+            opacity: foregroundOpacity,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: isBusy
@@ -238,6 +244,74 @@ class InspectionNextButton extends StatelessWidget {
                         ),
                       ),
                     ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class InspectionBottomActions extends StatelessWidget {
+  const InspectionBottomActions({
+    super.key,
+    required this.scale,
+    required this.nextEnabled,
+    required this.onBack,
+    required this.onNext,
+    this.nextLabel = 'Next',
+    this.nextIsBusy = false,
+  });
+
+  final double scale;
+  final bool nextEnabled;
+  final VoidCallback onBack;
+  final VoidCallback? onNext;
+  final String nextLabel;
+  final bool nextIsBusy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.black.withValues(alpha: 0.08),
+                  AppColors.black.withValues(alpha: 0.62),
+                ],
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                16 * scale,
+                12 * scale,
+                16 * scale,
+                34 * scale,
+              ),
+              child: Row(
+                children: [
+                  InspectionBackButton(scale: scale, onTap: onBack),
+                  SizedBox(width: 16 * scale),
+                  Expanded(
+                    child: InspectionNextButton(
+                      scale: scale,
+                      enabled: nextEnabled,
+                      onTap: onNext,
+                      label: nextLabel,
+                      isBusy: nextIsBusy,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
